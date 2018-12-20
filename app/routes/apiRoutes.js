@@ -1,20 +1,15 @@
 var path = require("path");
 var mysql = require('mysql');
-// var connection = mysql.createConnection({
-//   host     : 'localhost',
-//   user     : 'root',
-//   password : 'root',
-//   database : 'my_db'
-// });
+
+var connection = mysql.createConnection({
+  host: "localhost",
+  port: 8889,
+  user: "root",
+  password: "root",
+  database: "friends_db"
+});
  
-// connection.connect();
- 
-// connection.query('SELECT 1 + 1 AS solution', function (error, results, fields) {
-//   if (error) throw error;
-//   console.log('The solution is: ', results[0].solution);
-// });
- 
-// connection.end();
+connection.connect();
 
 module.exports = function(app) {
 
@@ -23,7 +18,18 @@ module.exports = function(app) {
   });
 
   app.get("/api/friends", function(req, res) {
-    res.json({test: "hello friends"});
+    connection.query('SELECT * from profiles', function (error, results, fields) {
+      if (error) {
+        console.log(error); 
+        res.json({'error': error}
+      )}
+      
+      console.log('The solution is: ', results);
+      res.json(results);
+    });
+     
+    // connection.end();
+    
   });
 
   app.post("/api/friends", function(req, res) {
