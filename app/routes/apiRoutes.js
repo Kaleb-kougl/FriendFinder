@@ -8,32 +8,47 @@ var connection = mysql.createConnection({
   password: "root",
   database: "friends_db"
 });
- 
+
 connection.connect();
 
-module.exports = function(app) {
+module.exports = function (app) {
 
-  app.get("/api", function(req, res) {
-    res.json({test: "Hello World api!"});
+  app.get("/api", function (req, res) {
+    res.json({ test: "Hello World api!" });
   });
 
-  app.get("/api/friends", function(req, res) {
-    connection.query('SELECT * from profiles', function (error, results, fields) {
+  app.get("/api/friends", async function (req, res) {
+    let dataPromise = await loadProfiles();
+    res.json(dataPromise);
+  });
+
+  app.post("/api/friends", function (req, res) {
+    let scores = req.body.scores.join(',');
+    connection.query('INSERT INTO profiles (name, photo, scores) VALUES (?, ?, ?)', [req.body.name, req.body.photo, scores], function (error, results) {
       if (error) {
-        console.log(error); 
-        res.json({'error': error}
-      )}
-      
-      console.log('The solution is: ', results);
+        console.log(error);
+        res.json({ 'error': error });
+      }
       res.json(results);
-    });
-     
-    // connection.end();
-    
+    })
   });
 
-  app.post("/api/friends", function(req, res) {
-    console.log(req.body);
-  });
+  async function loadProfiles() {
+    let promise1 = new Promise(
+      (resolve, reject) => connection.query('SELECT * from profiles', function (error, results, fields) {
+        if (error) {
+          console.log(error);
+          reject({ 'error': error });
+        }
+        let data = JSON.stringify(results);
+        data = JSON.parse(data);
+        for (let i = 0; i < data.length; i++) {
+          data[i]['scores'] = data[i].scores.split(',');
+        }
+        resolve(data);
+      })
+    );
+    return await promise1;
+  }
 
 }
