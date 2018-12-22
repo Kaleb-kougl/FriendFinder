@@ -24,13 +24,18 @@ module.exports = function (app) {
 
   app.post("/api/friends", function (req, res) {
     let scores = req.body.scores.join(',');
-    connection.query('INSERT INTO profiles (name, photo, scores) VALUES (?, ?, ?)', [req.body.name, req.body.photo, scores], function (error, results) {
-      if (error) {
-        console.log(error);
-        res.json({ 'error': error });
-      }
-      res.json(results);
-    })
+    connection.query('INSERT INTO profiles (name, photo, scores) VALUES (?, ?, ?)',
+      [req.body.name, req.body.photo, scores],
+      async function (error, results) {
+        if (error) {
+          console.log(error);
+          res.json({ 'error': error });
+        }
+        let profiles = await loadProfiles();
+        // console.log(profiles);
+        let newFriend = findFriend(profiles, req.body.scores);
+        res.json(newFriend);
+      });
   });
 
   async function loadProfiles() {
@@ -49,6 +54,24 @@ module.exports = function (app) {
       })
     );
     return await promise1;
+  }
+
+  function findFriend(profileArray, answers) {
+    let friend = { "person": "", "difference": Number.MAX_VALUE - 1 }
+    for (let i = 0; i < profileArray.length; i++) {
+      let currentDifference = 0;
+      for (let p = 0; p < profileArray[i].scores.length; p++) {
+        let profileScore = parseInt(profileArray[i].scores[p]);
+        currentDifference += Math.abs(answers[p] - profileScore);
+      }
+      if (currentDifference === 0) {
+        return profileArray[i];
+      } else if (currentDifference < friend.difference) {
+        friend.person = profileArray[i];
+        friend.difference = currentDifference;
+      }
+    }
+    return friend.person;
   }
 
 }
