@@ -27,17 +27,17 @@ module.exports = function (app) {
     res.json(dataPromise);
   });
 
-  app.post("/api/friends", function (req, res) {
+  app.post("/api/friends", async function (req, res) {
     let scores = req.body.scores.join(',');
+    let profiles = await loadProfiles();
     let newFriend = findFriend(profiles, req.body.scores);
     connection.query('INSERT INTO profiles (name, photo, scores) VALUES (?, ?, ?)',
       [req.body.name, req.body.photo, scores],
-      async function (error, results) {
+      function (error, results) {
         if (error) {
           console.log(error);
           res.json({ 'error': error });
         }
-        let profiles = await loadProfiles();
         // console.log(profiles);
         res.json(newFriend);
       });
