@@ -38,7 +38,6 @@ module.exports = function (app) {
           console.log(error);
           res.json({ 'error': error });
         }
-        // console.log(profiles);
         res.json(newFriend);
       });
   });
